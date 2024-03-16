@@ -1,8 +1,9 @@
 import asyncio
 import os
+import ollama
 from typing import AsyncIterable
 from dotenv import load_dotenv
-from fastapi import FastAPI, status
+from fastapi import FastAPI, status, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from langchain.callbacks import AsyncIteratorCallbackHandler
@@ -12,7 +13,7 @@ from pydantic import BaseModel
 
 # Import and instanceaded logguru
 from loguru import logger
-logger.add("file_{time}.log")
+#logger.add("./logs/file_{time}.log")
 
 
 load_dotenv()
@@ -60,9 +61,25 @@ async def send_message(content: str) -> AsyncIterable[str]:
 
     await task
 
-@app.post("/stream_chat")
+@app.post("/stream_chat",status_code=status.HTTP_200_OK)
 async def stream_chat(message: Message):
     generator = send_message(message.content)
     return StreamingResponse(generator, media_type="text/event-stream")
 
 
+@app.get("/models/",status_code=status.HTTP_200_OK)
+async def list_models()-> list[str]:
+    result = ollama.list()["models"]
+    resp = [item["model"] for item in result]
+    logger.info(f"List of models: {resp}")
+
+    return resp
+
+@app.get("/models/{model_name}",status_code=status.HTTP_200_OK)
+async def get_model(model_name: str):
+    try:
+        result = ollama.show(model_name)
+        logger.info(f"Model details: {result}")
+        return result
+    except ollama._types.ResponseError:
+        raise HTTPException(status_code=status.HTTP_200_OK , detail="Model not found")

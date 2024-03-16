@@ -2,7 +2,7 @@ import uvicorn
 
 # import logguru
 from loguru import logger
-logger.add("./logs/file_{time}.log")
+#logger.add("./logs/file_{time}.log")
 
 def main():
     # logger.info("Running movie-service")

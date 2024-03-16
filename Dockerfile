@@ -30,7 +30,7 @@ RUN pip install --upgrade pip
 RUN pip3 install poetry
 WORKDIR /app
 
-COPY ./api_llm/poetry.lock ./api_llm/pyproject.toml /app/
+COPY ./poetry.lock ./pyproject.toml /app/
 
 RUN poetry config virtualenvs.in-project false
 RUN poetry export --without-hashes --format=requirements.txt > requirements.txt
@@ -41,7 +41,7 @@ RUN pip install -r requirements.txt
 #WORKDIR /app
 #COPY --from=builder /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
 
-COPY ./api_llm/ /app/
+COPY ./ /app/
 
 ENV PYTHONPATH=/app
 RUN addgroup --system --gid 1001 app
@@ -49,6 +49,6 @@ RUN adduser --system --uid 1001 --gid 1001 --no-create-home app
 USER app
 
 ENTRYPOINT ["python", "run.py"]
-EXPOSE 9000
+EXPOSE 6677
 
 
