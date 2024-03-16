@@ -1,0 +1,71 @@
+version: '3.8'
+services:
+  ollama:
+    image: ollama/ollama:latest
+    container_name: ollama
+    privileged: true
+    pull_policy: always
+    runtime: nvidia
+    tty: true
+    ulimits:
+      memlock: -1
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
+      - NVIDIA_DRIVER_CAPABILITIES=compute,utility,video
+    #ports:
+    #  - 11434:11434
+    #restart: unless-stopped
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    volumes:
+      - ${PATH_OLLAMA}:/root/.ollama
+
+  redis:
+    image: redislabs/redismod:latest
+    container_name: redis
+    pull_policy: always
+    #restart: unless-stopped
+    environment:
+      - REDIS_PORT=6379
+      - REDIS_DATABASES=16
+    ports:
+      - "127.0.0.1:6379:6379"
+#     command: redis-server --save 20 1 --loglevel warning
+#     volumes:
+#      - ${PATH_REDIS}:/data
+#
+  chatbot:
+    build:
+       context: .
+       dockerfile: ./Dockerfile-chat-llm
+    container_name: chatbot
+    volumes:
+      - ./chat/:/app/
+      - ./chat/vectorstores:/app/vectorstores/
+    env_file:
+      - .env
+    ports:
+      - "8501:8501"
+    depends_on:
+      - ollama
+      - redis
+
+  api_llm:
+    build:
+       context: .
+       dockerfile: ./Dockerfile-api-llm
+    container_name: api_llm
+    env_file:
+      - .env
+    volumes:
+      - ./api_llm/:/app/
+    ports:
+      - "9000:9000"
+    depends_on:
+      - ollama
+      - redis
