@@ -10,6 +10,7 @@ from langchain.callbacks import AsyncIteratorCallbackHandler
 from langchain_community.chat_models import ChatOllama
 from langchain.schema import HumanMessage
 from pydantic import BaseModel
+import redis
 
 # Import and instanceaded logguru
 from loguru import logger
@@ -28,6 +29,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+r = redis.Redis(host='redis', port=6379, db=0)
+
 class Message(BaseModel):
     content: str
 
@@ -35,7 +38,7 @@ async def send_message(content: str) -> AsyncIterable[str]:
 
     callback = AsyncIteratorCallbackHandler()
     model = ChatOllama(
-        base_url="http://localhost:11434",
+        base_url="http://ollama_server:11434",
         model="llama2:7b",
         callbacks=[callback],
         streaming=True,
@@ -44,14 +47,12 @@ async def send_message(content: str) -> AsyncIterable[str]:
     )
 
 
-
     task = asyncio.create_task(
         model.agenerate(
             [[HumanMessage(content=content)]]  # type: ignore
         )
     )
     try:
-        # await callback.on_chat_model_start({"model": "llama2:7b", "base_url": "http://localhost:11434"})
         async for token in callback.aiter():
             yield token
     except Exception as e:

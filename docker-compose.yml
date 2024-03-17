@@ -1,5 +1,11 @@
 version: '3.8'
 services:
+  redis:
+    image: redis:latest
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
   ollama_server:
     image: ollama/ollama:latest
     container_name: ollama_server
@@ -24,6 +30,9 @@ services:
               capabilities: [gpu]
     volumes:
       - ${PATH_OLLAMA}:/root/.ollama
+    networks:
+      - red_llm
+
 
 
 
@@ -40,3 +49,12 @@ services:
       - "6677:6677"
     depends_on:
       - ollama_server
+    networks:
+      - red_llm
+
+networks:
+  red_llm:  # Definir una red personalizada
+    driver: bridge
+
+volumes:
+  redis_data:

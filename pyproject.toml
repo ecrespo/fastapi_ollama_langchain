@@ -17,6 +17,7 @@ langchain-community = "^0.0.28"
 langchainhub = "^0.1.15"
 ollama = "^0.1.7"
 loguru = "^0.7.2"
+redis = "^5.0.3"
 
 
 [build-system]
